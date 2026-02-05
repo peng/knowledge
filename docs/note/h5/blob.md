@@ -90,3 +90,63 @@ b.size  // 10
 
 值得关注的是，除此应用之外，由于 `File` API继承且基于 `Blob`，所以对于 `File` 的应用，也算是对 `Blob` 的应用。
 
+#### Blob 流式读取（现代方法）
+
+```js
+// 使用 Response 将 Blob 转为文本
+async function blobToText(blob) {
+    return await new Response(blob).text();
+}
+
+// 将 Blob 转为 ArrayBuffer
+async function blobToArrayBuffer(blob) {
+    return await new Response(blob).arrayBuffer();
+}
+
+// 将 Blob 转为 JSON
+async function blobToJSON(blob) {
+    return await new Response(blob).json();
+}
+
+// 或使用 Blob 原型方法（较新的 API）
+const text = await blob.text();
+const arrayBuffer = await blob.arrayBuffer();
+const stream = blob.stream();  // 返回 ReadableStream
+```
+
+#### Blob URL vs Data URL
+
+```js
+// Blob URL（推荐用于大文件）
+const blobUrl = URL.createObjectURL(blob);
+// 特点：内存引用，不会复制数据，性能更好
+// 需要手动释放：URL.revokeObjectURL(blobUrl)
+
+// Data URL（Base64）
+const reader = new FileReader();
+reader.onload = () => {
+    const dataUrl = reader.result;  // data:image/png;base64,...
+};
+reader.readAsDataURL(blob);
+// 特点：编码后体积增加约 33%，但可以直接嵌入 HTML/CSS
+```
+
+#### 下载 Blob 为文件
+
+```js
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 使用
+const blob = new Blob(['Hello, World!'], { type: 'text/plain' });
+downloadBlob(blob, 'hello.txt');
+```
+

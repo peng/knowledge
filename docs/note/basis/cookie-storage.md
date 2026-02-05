@@ -102,6 +102,24 @@ new Date().toGMTString()
 
 指定后，cookie只能用于http层面，不能被客户端脚本读取。
 
+##### SameSite 标志（重要）
+
+控制 cookie 在跨站请求中是否发送，用于防止 CSRF 攻击。
+
+取值：
+* `Strict`：完全禁止第三方 cookie，只在同站请求中发送
+* `Lax`：允许部分第三方请求（如 GET 请求导航），是 Chrome 80+ 的默认值
+* `None`：允许所有跨站请求，但必须配合 `Secure` 属性使用
+
+```js
+// SameSite=None 必须配合 Secure 使用
+document.cookie = 'key=value; SameSite=None; Secure';
+```
+
+**同站（Same-Site）vs 同源（Same-Origin）**：
+* 同源：协议 + 域名 + 端口完全相同
+* 同站：顶级域名 + 二级域名相同（如 `a.example.com` 和 `b.example.com` 是同站）
+
 <p class="tip">以上字段中，只有名称和值是必须的</p>
 
 #### Cookie 操作的封装
@@ -255,5 +273,109 @@ localStorage.removeItem('age')
 ```js
 localStorage.key(index)
 ```
+
+##### Storage 事件
+
+当 Storage 发生变化时（同一域名下的其他页面），会触发 `storage` 事件。
+
+```js
+// 监听 storage 变化（用于跨页面通信）
+window.addEventListener('storage', (event) => {
+    console.log('Key:', event.key);           // 变化的键
+    console.log('Old Value:', event.oldValue); // 旧值
+    console.log('New Value:', event.newValue); // 新值
+    console.log('URL:', event.url);            // 触发变化的页面 URL
+    console.log('Storage Area:', event.storageArea); // localStorage 或 sessionStorage
+});
+```
+
+**注意**：`storage` 事件不会在当前页面触发，只在同域名的其他页面触发。
+
+**应用场景 - 跨页面通信**：
+```js
+// 页面 A：发送消息
+localStorage.setItem('message', JSON.stringify({
+    from: 'Page A',
+    data: 'Hello from Page A',
+    timestamp: Date.now()
+}));
+
+// 页面 B：接收消息
+window.addEventListener('storage', (e) => {
+    if (e.key === 'message') {
+        const message = JSON.parse(e.newValue);
+        console.log(`Received from ${message.from}: ${message.data}`);
+    }
+});
+```
+
+##### IndexedDB（浏览器结构化数据存储）
+
+IndexedDB 是浏览器提供的一个事务型数据库系统，用于存储大量结构化数据。
+
+特点：
+* 存储容量大（通常 50MB+，取决于浏览器和磁盘空间）
+* 支持索引、事务、游标
+* 支持存储复杂对象（无需序列化）
+* 异步 API，不会阻塞主线程
+
+```js
+// 打开数据库
+const request = indexedDB.open('MyDatabase', 1);
+
+request.onerror = (event) => {
+    console.error('Database error:', event.target.error);
+};
+
+request.onsuccess = (event) => {
+    const db = event.target.result;
+    // 使用数据库
+};
+
+// 首次创建或版本升级时触发
+request.onupgradeneeded = (event) => {
+    const db = event.target.result;
+    
+    // 创建对象存储（类似表）
+    const objectStore = db.createObjectStore('users', { keyPath: 'id' });
+    
+    // 创建索引
+    objectStore.createIndex('name', 'name', { unique: false });
+    objectStore.createIndex('email', 'email', { unique: true });
+};
+
+// 添加数据
+function addUser(db, user) {
+    const transaction = db.transaction(['users'], 'readwrite');
+    const objectStore = transaction.objectStore('users');
+    const request = objectStore.add(user);
+    
+    request.onsuccess = () => {
+        console.log('User added successfully');
+    };
+}
+
+// 查询数据
+function getUser(db, id) {
+    const transaction = db.transaction(['users'], 'readonly');
+    const objectStore = transaction.objectStore('users');
+    const request = objectStore.get(id);
+    
+    request.onsuccess = (event) => {
+        console.log('User:', event.target.result);
+    };
+}
+```
+
+**Storage 对比总结**：
+
+| 特性 | Cookie | localStorage | sessionStorage | IndexedDB |
+|------|--------|--------------|----------------|-----------|
+| 容量 | ~4KB | ~5-10MB | ~5-10MB | 较大（通常 50MB+）|
+| 生命周期 | 可设置过期时间 | 永久 | 会话级 | 永久 |
+| 服务端通信 | 自动携带 | 不携带 | 不携带 | 不携带 |
+| 数据类型 | 字符串 | 字符串 | 字符串 | 结构化对象 |
+| 同步/异步 | 同步 | 同步 | 同步 | 异步 |
+| 索引查询 | 不支持 | 不支持 | 不支持 | 支持 |
 
 

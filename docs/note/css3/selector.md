@@ -108,3 +108,316 @@ selector[attr|=val] {
 ```
 
 你可能会问我为什么没有这个选择器写在上面的表格中，是这样的，这个选择器中有字符 `|`，这个字符在markdown表格中是表格的分界线。日了狗了.....
+
+---
+
+## CSS 现代选择器（2022+）
+
+### :has() 伪类 - 父选择器
+
+* 描述：选择包含特定后代的父元素，被称为"父选择器"
+* 浏览器支持：Chrome 105+, Safari 15.4+, Firefox 121+
+
+```css
+/* 选择包含 img 子元素的 figure 元素 */
+figure:has(img) {
+    border: 2px solid blue;
+}
+
+/* 选择包含 .active 类子元素的父元素 */
+.card:has(.active) {
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* 选择直接包含 figcaption 的 figure */
+figure:has(> figcaption) {
+    background: #f5f5f5;
+}
+
+/* 表单验证：选择包含无效输入项的表单组 */
+.form-group:has(input:invalid) {
+    border-color: red;
+}
+
+/* 选择被聚焦的输入框所在的表单容器 */
+form:has(input:focus) {
+    background: #fffbf0;
+}
+
+/* 与 :not() 结合 */
+.card:not(:has(img)) {
+    padding-left: 0;
+}
+```
+
+### :is() 和 :where() 伪类函数
+
+* 描述：简化复杂的选择器列表
+
+```css
+/* :is() - 匹配任意一个选择器（保持特异性） */
+:is(h1, h2, h3, h4, h5, h6) {
+    font-family: sans-serif;
+}
+
+:is(header, article) :is(h1, h2, h3) {
+    color: blue;
+}
+
+/* :where() - 匹配任意一个选择器（特异性为0） */
+:where(h1, h2, h3) {
+    font-size: 1.5em;
+}
+
+/* 容错性：即使其中一个选择器无效，整体仍然有效 */
+:is(h1, h2, ::-webkit-scrollbar) {
+    /* Firefox 不认识 ::-webkit-scrollbar，但 h1 和 h2 依然生效 */
+    color: red;
+}
+```
+
+### CSS 嵌套 (Nesting)
+
+* 浏览器支持：Chrome 112+, Safari 16.5+, Firefox 117+
+
+```css
+/* 使用嵌套 */
+.card {
+    background: white;
+    
+    .title {
+        font-size: 1.5rem;
+        
+        &:hover {
+            color: blue;
+        }
+    }
+    
+    /* & 表示父选择器 */
+    &:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* 嵌套媒体查询 */
+    @media (min-width: 768px) {
+        padding: 20px;
+    }
+}
+
+/* 选择器组合 */
+.button {
+    /* 生成 .button.primary */
+    &.primary {
+        background: blue;
+    }
+    
+    /* 生成 .button, .link */
+    &, .link {
+        cursor: pointer;
+    }
+}
+```
+
+---
+
+## CSS 容器查询 (Container Queries)
+
+* 描述：基于容器大小而非视口大小应用样式
+* 浏览器支持：Chrome 105+, Safari 16+, Firefox 110+
+
+```css
+/* 1. 定义容器 */
+.card-container {
+    container-type: inline-size;
+    container-name: card;
+}
+
+/* 简写形式 */
+.card-container {
+    container: card / inline-size;
+}
+
+/* 2. 使用容器查询 */
+@container (min-width: 400px) {
+    .card {
+        display: flex;
+        flex-direction: row;
+    }
+}
+
+@container card (min-width: 600px) {
+    .card {
+        font-size: 1.2rem;
+    }
+}
+```
+
+### 容器查询单位
+
+```css
+@container (min-width: 400px) {
+    .item {
+        width: 50cqw;        /* cqw - 容器查询宽度 */
+        height: 30cqh;       /* cqh - 容器查询高度 */
+        padding: 5cqi;       /* cqi - 容器查询行内尺寸 */
+        margin-bottom: 2cqb; /* cqb - 容器查询块级尺寸 */
+        font-size: 5cqmin;   /* cqmin / cqmax */
+    }
+}
+```
+
+---
+
+## CSS 级联层 (Cascade Layers)
+
+* 描述：通过 `@layer` 规则显式定义 CSS 的层叠顺序
+* 浏览器支持：Chrome 99+, Safari 15.4+, Firefox 97+
+
+```css
+/* 定义层的顺序（越后定义优先级越高） */
+@layer reset, base, components, utilities;
+
+/* 在特定层中编写样式 */
+@layer reset {
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+    body {
+        margin: 0;
+    }
+}
+
+@layer base {
+    body {
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+    }
+}
+
+@layer components {
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+    }
+}
+
+/* 导入到特定层 */
+@import url('reset.css') layer(reset);
+@import url('bootstrap.css') layer(framework);
+
+/* 覆盖框架样式 */
+@layer custom {
+    .btn {
+        background: purple; /* 即使特异性相同，也会覆盖 bootstrap */
+    }
+}
+```
+
+---
+
+## CSS 颜色函数
+
+### oklch() 和 oklab()
+
+```css
+/* oklch：感知均匀的颜色空间 */
+.element {
+    color: oklch(70% 0.2 250);
+    background: oklch(90% 0.05 120 / 0.5);
+}
+
+/* oklab */
+.element {
+    color: oklab(70% -0.1 0.2);
+}
+```
+
+### color-mix()
+
+```css
+/* 混合两种颜色 */
+.element {
+    background: color-mix(in srgb, blue 70%, red);
+    color: color-mix(in oklch, blue 50%, red);
+}
+```
+
+### 相对颜色
+
+```css
+.element {
+    --base: #3498db;
+    
+    /* 变亮 */
+    color: hsl(from var(--base) h s calc(l + 20%));
+    
+    /* 变暗 */
+    background: hsl(from var(--base) h s calc(l - 10%));
+    
+    /* 透明度变化 */
+    border-color: rgb(from var(--base) r g b / 0.5);
+}
+```
+
+---
+
+## CSS 视口单位增强
+
+```css
+.element {
+    /* 小视口单位（考虑地址栏收起状态） */
+    height: 100svh;
+    
+    /* 大视口单位（考虑地址栏展开状态） */
+    height: 100lvh;
+    
+    /* 动态视口单位（自动适应地址栏变化） */
+    height: 100dvh;
+}
+```
+
+---
+
+## CSS 其他新特性
+
+### text-wrap: balance / pretty
+
+```css
+.headline {
+    text-wrap: balance;  /* 平衡短文本行的长度 */
+    text-wrap: pretty;   /* 更好的断行 */
+}
+```
+
+### @property 自定义属性
+
+```css
+/* 注册自定义属性 */
+@property --gradient-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+.animated-gradient {
+    background: linear-gradient(var(--gradient-angle), red, blue);
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    to {
+        --gradient-angle: 360deg;
+    }
+}
+```
+
+### CSS 数学函数
+
+```css
+.element {
+    width: clamp(300px, 50%, 800px);  /* 限制范围 */
+    font-size: min(5vw, 20px);        /* 取最小值 */
+    padding: max(2vw, 16px);          /* 取最大值 */
+}
+```

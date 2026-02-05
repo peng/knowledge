@@ -200,6 +200,123 @@ Node构造函数的属性，也是节点属性 nodeType 的值
 
 * 返回值：
     * `{Element}` 被插入的节点
+
+###### append(...nodesOrStrings)
+
+* 描述：在元素末尾插入节点或字符串（可以同时插入多个）
+* 支持：Chrome 54+, Firefox 49+, Safari 10+
+* 参数：
+    * `{Node | String} nodesOrStrings` 要插入的节点或字符串
+* 特点：
+    * 与 `appendChild` 不同，可以同时插入多个节点
+    * 可以直接插入字符串（自动创建文本节点）
+    * 返回 `undefined`
+* 示例：
+```js
+const parent = document.getElementById('parent');
+const child1 = document.createElement('div');
+const child2 = document.createElement('span');
+
+parent.append(child1);                    // 插入单个节点
+parent.append(child1, child2);            // 插入多个节点
+parent.append('Hello World');             // 插入文本
+parent.append(child1, ' text ', child2);  // 混合插入
+```
+
+###### prepend(...nodesOrStrings)
+
+* 描述：在元素开头插入节点或字符串
+* 支持：Chrome 54+, Firefox 49+, Safari 10+
+* 参数：同 `append()`
+* 示例：
+```js
+const parent = document.getElementById('parent');
+parent.prepend(document.createElement('header'));
+```
+
+###### before(...nodesOrStrings)
+
+* 描述：在当前元素之前插入节点或字符串
+* 支持：Chrome 54+, Firefox 49+, Safari 10+
+* 示例：
+```js
+const ref = document.getElementById('reference');
+ref.before(document.createElement('div'));
+```
+
+###### after(...nodesOrStrings)
+
+* 描述：在当前元素之后插入节点或字符串
+* 支持：Chrome 54+, Firefox 49+, Safari 10+
+* 示例：
+```js
+const ref = document.getElementById('reference');
+ref.after(document.createElement('div'));
+```
+
+###### replaceWith(...nodesOrStrings)
+
+* 描述：用新的节点或字符串替换当前元素
+* 支持：Chrome 54+, Firefox 49+, Safari 10+
+* 示例：
+```js
+const oldEl = document.getElementById('old');
+oldEl.replaceWith(document.createElement('div'));
+```
+
+###### remove()
+
+* 描述：从 DOM 中移除当前元素
+* 支持：Chrome 54+, Firefox 48+, Safari 10+
+* 示例：
+```js
+const el = document.getElementById('to-remove');
+el.remove();  // 不需要访问 parentNode
+
+// 对比旧方法
+el.parentNode.removeChild(el);
+```
+
+###### closest(selector)
+
+* 描述：从当前元素开始，向上查找最近的匹配选择器的祖先元素
+* 支持：Chrome 41+, Firefox 35+, Safari 9+
+* 参数：
+    * `{String} selector` CSS 选择器
+* 返回值：
+    * `{Element | null}` 匹配的祖先元素，如果没有则返回 null
+* 示例：
+```js
+// 查找最近的 li 祖先
+const li = event.target.closest('li');
+
+// 查找具有特定类的祖先
+const card = event.target.closest('.card');
+
+// 检查是否在模态框内
+const isInModal = !!event.target.closest('.modal');
+```
+
+###### matches(selector)
+
+* 描述：检查元素是否匹配给定的 CSS 选择器
+* 支持：Chrome 34+, Firefox 34+, Safari 7+
+* 参数：
+    * `{String} selector` CSS 选择器
+* 返回值：
+    * `{Boolean}` 是否匹配
+* 示例：
+```js
+const el = document.getElementById('myElement');
+
+if (el.matches('.active')) {
+    console.log('元素具有 active 类');
+}
+
+if (el.matches('[data-toggle="modal"]')) {
+    console.log('元素是模态框触发器');
+}
+```
     
 ###### insertBefore(element, target)
 

@@ -68,6 +68,22 @@ var str = `abc`
 * 返回值：新字符串
 * 是否改变原字符串：否
 
+###### 【ES2019】str.trimStart()
+* 描述：去掉字符串开头（左侧）的空格
+* 返回值：新字符串
+* 示例：
+```js
+'  hello  '.trimStart();   // 'hello  '
+```
+
+###### 【ES2019】str.trimEnd()
+* 描述：去掉字符串结尾（右侧）的空格
+* 返回值：新字符串
+* 示例：
+```js
+'  hello  '.trimEnd();     // '  hello'
+```
+
 ###### str.toLowerCase()
 ###### str.toUpperCase()
 ###### str.toLocaleLowerCase()
@@ -203,6 +219,52 @@ var str = `abc`
 #### 字符串的其他扩展
 
 ES6为字符串添加了遍历器接口(Iterator)，这个遍历器最大的优点是可以识别大于0xFFFF的码点，传统的 `for` 循环无法识别这样的码点。
+
+---
+
+## ES2020+ 字符串新特性
+
+###### 【ES2020】String.prototype.matchAll()
+* 描述：返回正则表达式在字符串中所有匹配结果的迭代器，包含捕获组信息
+* 参数：正则表达式（必须带有 `g` 全局标志）
+* 返回值：迭代器对象，每一项是完整的匹配结果数组（包含捕获组）
+* 示例：
+```js
+const str = 'test1test2test3';
+const regex = /test(\d)/g;
+
+// match() 返回所有匹配项，但不包含捕获组
+str.match(regex);  // ['test1', 'test2', 'test3']
+
+// matchAll() 返回所有匹配结果，包含捕获组
+const matches = [...str.matchAll(regex)];
+// [
+//   ['test1', '1', index: 0, input: 'test1test2test3', groups: undefined],
+//   ['test2', '2', index: 5, input: 'test1test2test3', groups: undefined],
+//   ['test3', '3', index: 10, input: 'test1test2test3', groups: undefined]
+// ]
+```
+
+###### 【ES2021】String.prototype.replaceAll()
+* 描述：替换字符串中所有匹配的内容
+* 示例：
+```js
+const str = 'foo bar foo';
+str.replaceAll('foo', 'baz');  // 'baz bar baz'
+str.replaceAll(/foo/g, 'baz'); // 'baz bar baz'
+```
+
+###### 【ES2024】String.prototype.isWellFormed() / toWellFormed()
+* 描述：处理 Unicode 代理对（surrogate pairs）
+* 示例：
+```js
+// 检测字符串是否为格式良好的 Unicode
+const str1 = "Hello\uD800World";  // 包含孤立的代理项
+console.log(str1.isWellFormed());  // false
+
+// 修复格式
+const fixed = str1.toWellFormed();  // 将孤立代理项替换为替换字符 �
+```
 
 
 

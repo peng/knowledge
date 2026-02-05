@@ -335,6 +335,117 @@ p.then(res => console.log(res))
 p.catch(msg => console.log(msg))
 ```
 
+###### 【ES2020】Promise.allSettled
+
+* 作用：等待所有 `Promise` 实例完成（无论成功或失败）
+
+* 参数：同 `Promise.all`
+
+* 特点：
+
+`Promise.allSettled` 返回的 `Promise` 实例总是 `fulfilled` 状态，永远不会 `rejected`。它等待所有传入的 `Promise` 都完成（settled），然后返回一个包含所有结果的对象数组。
+
+* 返回值格式：
+```js
+// 成功的结果
+{ status: 'fulfilled', value: xxx }
+// 失败的结果
+{ status: 'rejected', reason: xxx }
+```
+
+* 例子：
+```js
+const promises = [
+    Promise.resolve('success1'),
+    Promise.reject('error'),
+    Promise.resolve('success2')
+];
+
+Promise.allSettled(promises).then(results => {
+    console.log(results);
+    // [
+    //   { status: 'fulfilled', value: 'success1' },
+    //   { status: 'rejected', reason: 'error' },
+    //   { status: 'fulfilled', value: 'success2' }
+    // ]
+});
+```
+
+<p class="tip">与 `Promise.all` 的区别：`all` 会在第一个失败时立即失败，而 `allSettled` 会等待所有完成</p>
+
+###### 【ES2021】Promise.any
+
+* 作用：返回第一个成功的 `Promise` 结果
+
+* 参数：同 `Promise.all`
+
+* 特点：
+
+`Promise.any` 返回第一个 `fulfilled` 的 `Promise` 的值。如果所有 `Promise` 都 `rejected`，则返回 `AggregateError`（聚合错误）。
+
+* 例子：
+```js
+const promises = [
+    Promise.reject('error1'),
+    Promise.resolve('first success'),
+    Promise.resolve('second success')
+];
+
+Promise.any(promises)
+    .then(value => console.log(value))  // 'first success'
+    .catch(err => console.log(err));
+
+// 全部失败的情况
+const allRejected = [
+    Promise.reject('error1'),
+    Promise.reject('error2')
+];
+Promise.any(allRejected).catch(err => {
+    console.log(err instanceof AggregateError); // true
+    console.log(err.errors); // ['error1', 'error2']
+});
+```
+
+<p class="tip">`Promise.any` vs `Promise.race`：`race` 返回最快完成的结果（无论成功失败），`any` 返回最快的成功结果</p>
+
+###### 【ES2024】Promise.withResolvers
+
+* 作用：创建一个 `Promise` 并暴露其 `resolve` 和 `reject` 方法
+
+* 返回值：
+```js
+{
+    promise: Promise,
+    resolve: Function,
+    reject: Function
+}
+```
+
+* 使用场景：当需要在 Promise 外部控制其完成状态时非常有用
+
+* 例子：
+```js
+// 传统方式
+let resolve, reject;
+const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+});
+
+// 使用 withResolvers（更简洁）
+const { promise, resolve, reject } = Promise.withResolvers();
+
+// 实际应用：超时控制
+function fetchWithTimeout(url, timeout) {
+    const { promise, resolve, reject } = Promise.withResolvers();
+    
+    fetch(url).then(resolve, reject);
+    setTimeout(() => reject(new Error('Timeout')), timeout);
+    
+    return promise;
+}
+```
+
 ###### Promise.resolve
 
 * 作用：将现有对象(或者原始值)转为 `Promise` 对象。
@@ -379,4 +490,26 @@ const p = new Promise((resolve, reject) => {
 ```
 
 或者点击这里：[https://github.com/tc39/proposal-promise-try](https://github.com/tc39/proposal-promise-try)
+
+---
+
+## ES2022+ 异步相关新特性
+
+### Error Cause
+
+* 描述：为 Error 构造函数添加 cause 选项，用于链式错误追踪
+
+```js
+try {
+    doSomething();
+} catch (e) {
+    throw new Error('操作失败', { cause: e });
+}
+
+// 捕获后可以访问 cause
+catch (e) {
+    console.log(e.message);  // '操作失败'
+    console.log(e.cause);    // 原始错误
+}
+```
 

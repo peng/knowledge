@@ -210,6 +210,73 @@ if(Object.prototype.toString.call(obj) === '[object Array]'){
 * 返回值：`true` 包含， `false` 不包含
 <p class="tip">includes 相比于 indexOf 的优势有两点：1、更加语义化，不需要判断返回值是否为 -1。2、由于 indexOf 底层在判断是否相等时使用的是全等操作符 ===，这会导致使用 indexOf 查找 NaN 时查不到，而 includes 则不存在这样的问题</p>
 
+###### 【ES2022】at()
+* 描述：返回指定索引位置的数组项，支持负数索引
+* 参数：整数索引（支持负数，-1 表示最后一项）
+* 返回值：该索引位置的数组项，不存在则返回 `undefined`
+* 示例：
+```js
+const arr = ['a', 'b', 'c', 'd'];
+arr.at(0);   // 'a'
+arr.at(-1);  // 'd' （最后一项）
+arr.at(-2);  // 'c' （倒数第二项）
+arr.at(10);  // undefined
+```
+<p class="tip">at() 的优势是支持负数索引，比 `arr[arr.length - 1]` 更简洁优雅</p>
+
+###### 【ES2023】findLast() / findLastIndex()
+* 描述：从数组末尾开始查找第一个符合条件的项 / 索引
+* 参数：同 find() / findIndex()
+* 返回值：findLast 返回符合条件的项（未找到返回 undefined），findLastIndex 返回索引（未找到返回 -1）
+* 示例：
+```js
+const arr = [5, 12, 8, 130, 44, 8];
+arr.findLast(x => x > 10);       // 44 （从后往前第一个大于10的）
+arr.findLastIndex(x => x > 10); // 5 （对应索引）
+```
+
+#### 【ES2023】不可变数组方法
+
+ES2023 引入了一系列新的数组方法，它们不会改变原数组，而是返回新数组：
+
+###### toSorted()
+* 描述：sort() 的不可变版本，返回排序后的新数组
+* 示例：
+```js
+const arr = [3, 1, 4, 1, 5];
+const sorted = arr.toSorted();  // [1, 1, 3, 4, 5]
+console.log(arr);               // [3, 1, 4, 1, 5]（原数组不变）
+```
+
+###### toReversed()
+* 描述：reverse() 的不可变版本，返回反转后的新数组
+* 示例：
+```js
+const arr = [1, 2, 3];
+const reversed = arr.toReversed();  // [3, 2, 1]
+console.log(arr);                   // [1, 2, 3]（原数组不变）
+```
+
+###### toSpliced()
+* 描述：splice() 的不可变版本，返回修改后的新数组
+* 参数：同 splice(start, deleteCount, ...items)
+* 示例：
+```js
+const arr = [1, 2, 3, 4, 5];
+const spliced = arr.toSpliced(1, 2, 'a', 'b');  // [1, 'a', 'b', 4, 5]
+console.log(arr);                                // [1, 2, 3, 4, 5]（原数组不变）
+```
+
+###### with()
+* 描述：修改指定索引位置的值，返回新数组（不改变原数组）
+* 参数：(index, value)
+* 示例：
+```js
+const arr = [1, 2, 3];
+const newArr = arr.with(1, 'a');  // [1, 'a', 3]
+console.log(arr);                 // [1, 2, 3]（原数组不变）
+```
+
 #### 迭代方法
 
 ###### forEach()

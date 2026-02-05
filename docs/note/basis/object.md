@@ -122,3 +122,174 @@
 三个方法限制一个对象的强烈程度为：
 
 `Object.freeze` > `Object.seal` > `Object.preventExtension`
+
+---
+
+#### 【ES2022】Object.hasOwn()
+
+* 描述：检查对象是否包含指定的自有属性（不会检查原型链）
+
+* 参数：
+    * 第一个参数：要检查的对象
+    * 第二个参数：要检查的属性名
+
+* 返回值：`true` 如果对象包含该自有属性，`false` 否则
+
+* 与 `hasOwnProperty` 的区别：
+    1. `hasOwn` 是静态方法，不会受到对象上可能存在的同名属性干扰
+    2. 对于使用 `Object.create(null)` 创建的对象（没有原型），`hasOwnProperty` 会报错
+
+* 示例：
+```js
+const obj = { foo: 'bar' };
+
+// 传统方式
+obj.hasOwnProperty('foo');  // true
+
+// 新的方式（推荐）
+Object.hasOwn(obj, 'foo');  // true
+
+// 处理没有原型的对象
+const nullProtoObj = Object.create(null);
+nullProtoObj.foo = 'bar';
+// nullProtoObj.hasOwnProperty('foo'); // 报错！
+Object.hasOwn(nullProtoObj, 'foo');    // true
+
+// 不会检查原型链
+obj.toString;  // [Function: toString]
+Object.hasOwn(obj, 'toString');  // false（继承自 Object.prototype）
+```
+
+#### 【ES2024】Object.groupBy()
+
+* 描述：根据回调函数返回的键将数组元素分组
+
+* 参数：
+    * 第一个参数：可迭代对象（如数组）
+    * 第二个参数：回调函数，接收 (item, index) 参数，返回用于分组的键
+
+* 返回值：一个对象，键是分组标识，值是对应的元素数组
+
+* 示例：
+```js
+const inventory = [
+    { name: 'apple', type: 'fruit', quantity: 5 },
+    { name: 'banana', type: 'fruit', quantity: 2 },
+    { name: 'carrot', type: 'vegetable', quantity: 10 },
+    { name: 'broccoli', type: 'vegetable', quantity: 3 }
+];
+
+// 按 type 分组
+const grouped = Object.groupBy(inventory, ({ type }) => type);
+// {
+//   fruit: [
+//     { name: 'apple', type: 'fruit', quantity: 5 },
+//     { name: 'banana', type: 'fruit', quantity: 2 }
+//   ],
+//   vegetable: [
+//     { name: 'carrot', type: 'vegetable', quantity: 10 },
+//     { name: 'broccoli', type: 'vegetable', quantity: 3 }
+//   ]
+// }
+
+// 按数量是否充足分组
+const stockStatus = Object.groupBy(inventory, ({ quantity }) => 
+    quantity > 5 ? 'sufficient' : 'low'
+);
+// {
+//   low: [{ name: 'apple', ... }, { name: 'banana', ... }, { name: 'broccoli', ... }],
+//   sufficient: [{ name: 'carrot', ... }]
+// }
+```
+
+<p class="tip">`Object.groupBy()` 返回的对象使用 `null` 原型，因此没有继承 Object.prototype 的方法</p>
+
+#### 【ES2024】Map.groupBy()
+
+* 描述：与 `Object.groupBy()` 类似，但返回 Map 而不是对象
+
+* 优势：
+    1. 可以使用任意类型的值作为键（不仅仅是字符串和 Symbol）
+    2. 适合需要复杂键的场景
+
+* 示例：
+```js
+const items = [1, 2, 3, 4, 5];
+
+// 使用对象作为键
+const grouped = Map.groupBy(items, (num) => {
+    return num % 2 === 0 ? { type: 'even' } : { type: 'odd' };
+});
+
+// grouped 是 Map，键是对象 { type: 'even' } 和 { type: 'odd' }
+```
+
+---
+
+## ES2020+ 其他新特性
+
+### BigInt - 大整数
+
+* 描述：表示任意精度的整数，突破了 Number.MAX_SAFE_INTEGER (2^53 - 1) 的限制
+
+* 创建方式：
+```js
+const big = 9007199254740993n;           // 在整数后加 n
+const same = BigInt(9007199254740993);   // 使用构造函数
+```
+
+* 注意事项：
+    * BigInt 和 Number 不能直接混合运算
+    * 比较运算符可以混用（`1n == 1` 为 true，`1n === 1` 为 false）
+
+### 空值合并运算符 (??)
+
+* 描述：当左侧为 `null` 或 `undefined` 时，返回右侧值
+
+```js
+const value = 0;
+value || 'default';   // 'default'（0 是 falsy）
+value ?? 'default';   // 0（0 不是 null/undefined）
+
+null ?? 'default';    // 'default'
+```
+
+### 可选链操作符 (?.) 
+
+* 描述：安全地访问嵌套对象属性
+
+```js
+const user = { profile: { name: 'John' } };
+
+// 使用可选链
+user.profile?.address?.city;  // undefined（不报错）
+user.profile?.name;           // 'John'
+```
+
+### globalThis
+
+* 描述：统一的方式访问全局对象
+
+```js
+globalThis === window;     // true（浏览器）
+globalThis === global;     // true（Node.js）
+```
+
+### WeakRef & FinalizationRegistry
+
+* 描述：弱引用，不会阻止垃圾回收
+
+```js
+// 弱引用对象
+let target = { data: 'valuable' };
+const ref = new WeakRef(target);
+
+// 获取引用（可能返回 undefined）
+const obj = ref.deref();
+
+// 清理回调注册表
+const registry = new FinalizationRegistry((heldValue) => {
+    console.log(`Object was garbage collected`);
+});
+registry.register(target, 'metadata');
+```
